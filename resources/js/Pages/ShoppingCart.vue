@@ -219,26 +219,22 @@ const sendListViaEmail = () => {
     return;
   }
 
-  let body = {
-    'email': email,
-    'cart': JSON.stringify(cart.value)
-  }
-
-  // fetch(props.emailRoute, {
-  //   method: 'POST',
-  //   headers: {
-  //     'Content-Type': 'application/json',
-  //   },
-  //   body: body
-  // }).then((data) => {
-  //   console.log(data);
-  // });
-
   axios
     .post(props.emailRoute, {
-      body: body
+      body: {
+        'email': email,
+        'cart': JSON.stringify(cart.value)
+      }
     })
-    .then((response) => console.log(response))
+    .then((response) => {
+      if (response.status === 200) {
+        alert("Shopping list sent! :)");
+
+        return;
+      }
+
+      alert("Whoops, something went wrong!");
+    })
 };
 
 const validateEmail = (email) => {
