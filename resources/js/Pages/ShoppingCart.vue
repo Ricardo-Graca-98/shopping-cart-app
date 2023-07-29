@@ -28,17 +28,19 @@
     </div>
 
     <div class="flex flex-col">
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-3">
+      <div
+        class="grid grid-flow-row-dense grid-rows-2 sm:grid-cols-11 gap-4 mb-3"
+      >
         <!-- Product list -->
         <div
-          class="bg-white p-4 rounded-lg shadow-md max-h-[400px] overflow-y-auto"
+          class="bg-white p-4 rounded-lg shadow-md max-h-[400px] overflow-y-auto col-span-5"
         >
           <h2 class="text-xl font-bold mb-4">Available Products</h2>
           <hr class="border-4 border-blue-500 mb-4" />
           <ul>
             <li
               v-for="product in availableProducts"
-              :key="product.id"
+              :key="product.uuid"
               :class="{ 'in-cart': isProductInCart(product) }"
             >
               <div class="flex justify-between items-center mb-2">
@@ -58,14 +60,14 @@
         </div>
 
         <!-- Shopping cart list -->
-        <div class="bg-white p-4 rounded-lg shadow-md">
+        <div class="bg-white p-4 rounded-lg shadow-md col-span-5">
           <h2 class="text-xl font-bold mb-4">Shopping Cart</h2>
           <hr class="border-4 border-green-500 mb-4" />
           <draggable
             :list="cart"
             @start="dragging = true"
             @end="dragging = false"
-            item-key="id"
+            item-key="uuid"
           >
             <template #item="{ element }">
               <div class="flex justify-between items-center mb-2">
@@ -90,16 +92,40 @@
             </template>
           </draggable>
         </div>
-      </div>
-
-      <div class="flex justify-between">
+        <div class="max-h-min max-w-max">
+          <button
+            class="max-h-min max-w-max bg-white p-4 rounded-lg shadow-md"
+            @click="sendListViaEmail"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              class="w-6 h-6"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"
+              />
+            </svg>
+          </button>
+        </div>
         <!-- Spending Limit -->
-        <SpendingLimit @spendingLimitChanged="updateSpendingLimit" />
+        <SpendingLimit
+          @spendingLimitChanged="updateSpendingLimit"
+          class="col-span-2 h-20 items-center justify-items-center"
+        />
+
+        <div class="col-span-6"></div>
 
         <!-- Cart Total -->
         <CartTotal
           v-bind:total-cart-price="totalCartPrice"
           v-bind:spending-limit="spendingLimit"
+          class="col-span-2 h-20 items-center justify-items-center"
         />
       </div>
     </div>
@@ -118,6 +144,10 @@ const props = defineProps({
     type: Object,
     required: true,
   },
+  emailRoute: {
+    type: String,
+    required: true
+  }
 });
 
 const localCartStorageKey = "shopping_cart";
@@ -172,6 +202,51 @@ const removeFromCart = (cartItem) => {
       cart.value.splice(cartItemIndex, 1);
     }
   }
+};
+
+const sendListViaEmail = () => {
+  if (cart.value.length <= 0) {
+    alert("Cart is empty!");
+
+    return;
+  }
+
+  let email = prompt("Enter your email address:");
+
+  if (!validateEmail(email)) {
+    alert("Invalid email address.");
+
+    return;
+  }
+
+  let body = {
+    'email': email,
+    'cart': JSON.stringify(cart.value)
+  }
+
+  // fetch(props.emailRoute, {
+  //   method: 'POST',
+  //   headers: {
+  //     'Content-Type': 'application/json',
+  //   },
+  //   body: body
+  // }).then((data) => {
+  //   console.log(data);
+  // });
+
+  axios
+    .post(props.emailRoute, {
+      body: body
+    })
+    .then((response) => console.log(response))
+};
+
+const validateEmail = (email) => {
+  if (/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(email)) {
+    return true;
+  }
+
+  return false;
 };
 
 // Watch for changes in the 'cart' array and save to localStorage
