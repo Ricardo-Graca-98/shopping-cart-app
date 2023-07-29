@@ -1,10 +1,10 @@
 <?php
 
 use Inertia\Inertia;
-use App\Models\Product;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Foundation\Application;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Cart\ShoppingCartController;
 
 /*
 |--------------------------------------------------------------------------
@@ -17,11 +17,7 @@ use App\Http\Controllers\ProfileController;
 |
 */
 
-Route::get('/', function () {
-    return Inertia::render('ShoppingCart', [
-        'availableProducts' => Product::all(),
-    ]);
-});
+Route::get('/', [ShoppingCartController::class, 'index'])->name('cart.index');
 
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
