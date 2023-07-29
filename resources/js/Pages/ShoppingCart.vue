@@ -1,5 +1,5 @@
 <template>
-  <Head title="Home" />
+  <Head title="Cart" />
 
   <div
     class="relative sm:flex sm:justify-center sm:items-center min-h-screen bg-dots-darker bg-center bg-gray-100 dark:bg-dots-lighter dark:bg-gray-900 selection:bg-red-500 selection:text-white"
@@ -94,25 +94,13 @@
 
       <div class="flex justify-between">
         <!-- Spending Limit -->
-        <div class="bg-white p-4 rounded-lg shadow-md">
-          <div class="relative" data-te-input-wrapper-init>
-            <label for="limit"
-              ><span class="font-bold">Spending Limit: </span>£
-            </label>
-            <input v-model="spendingLimit" class="w-40" type="number" id="limit" min="0" max="9999" />
-          </div>
-        </div>
+        <SpendingLimit @spendingLimitChanged="updateSpendingLimit" />
 
         <!-- Cart Total -->
-        <div class="bg-white p-4 rounded-lg shadow-md flex justify-center items-center">
-          <p>
-            <span class="font-bold">Total Price: </span>£{{ totalCartPrice.toFixed(2) }}
-          </p>
-          <svg v-if="shouldAlert" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 ml-2" :class="[overLimit ? 'fill-red-500' : 'fill-yellow-500']">
-  <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0M3.124 7.5A8.969 8.969 0 015.292 3m13.416 0a8.969 8.969 0 012.168 4.5" />
-</svg>
-        </div>
-        
+        <CartTotal
+          v-bind:total-cart-price="totalCartPrice"
+          v-bind:spending-limit="spendingLimit"
+        />
       </div>
     </div>
   </div>
@@ -122,6 +110,8 @@
 import { Head, Link } from "@inertiajs/vue3";
 import { ref, onMounted, watch, computed } from "vue";
 import draggable from "vuedraggable";
+import CartTotal from "@/Components/Cart/Total.vue";
+import SpendingLimit from "@/Components/Cart/SpendingLimit.vue";
 
 const props = defineProps({
   availableProducts: {
@@ -131,14 +121,12 @@ const props = defineProps({
 });
 
 const localCartStorageKey = "shopping_cart";
-const localLimitStorageKey = "spending_limit";
 const cart = ref([]);
 const spendingLimit = ref(0);
 
 // Load cart data from localStorage when the component is mounted
 onMounted(() => {
   getStoredCart();
-  getStoredSpendingLimit();
 });
 
 const getStoredCart = () => {
@@ -148,18 +136,9 @@ const getStoredCart = () => {
   }
 };
 
-const getStoredSpendingLimit = () => {
-  const storedSpendingLimit = localStorage.getItem(localLimitStorageKey);
-  spendingLimit.value = storedSpendingLimit ?? 0;
+const updateSpendingLimit = (limit) => {
+  spendingLimit.value = Number(limit);
 };
-
-const shouldAlert = computed(() => {
-    return totalCartPrice.value > (spendingLimit.value * 0.8); // We want to be alert at 80%
-})
-
-const overLimit = computed(() => {
-    return totalCartPrice.value > spendingLimit.value;
-})
 
 const totalCartPrice = computed(() => {
   return cart.value.reduce(

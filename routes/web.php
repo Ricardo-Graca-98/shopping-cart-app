@@ -18,7 +18,7 @@ use App\Http\Controllers\ProfileController;
 */
 
 Route::get('/', function () {
-    return Inertia::render('Welcome', [
+    return Inertia::render('ShoppingCart', [
         'availableProducts' => Product::all(),
     ]);
 });
