@@ -23,5 +23,5 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 Route::prefix('cart')->name('cart.')->group(function () {
     Route::post('email/send', [CartEmailController::class, 'send'])->name('email.send');
     Route::post('store', [CartController::class, 'store'])->name('store');
-    Route::post('retrieve', [CartController::class, 'show'])->name('save');
+    Route::get('retrieve', [CartController::class, 'show'])->name('show');
 });

@@ -169,8 +169,8 @@ const props = defineProps({
   },
   user: {
     type: Object,
-    required: false
-  }
+    required: false,
+  },
 });
 
 const localCartStorageKey = "shopping_cart";
@@ -187,7 +187,7 @@ const saveList = () => {
     .post(route("cart.store"), {
       body: {
         cart: JSON.stringify(cart.value),
-        userId: props.user.id
+        userId: props.user.id,
       },
     })
     .then((response) => {
@@ -202,32 +202,38 @@ const saveList = () => {
 };
 
 const getStoredCart = () => {
-  if (props.user) {
+  if (!props.user) {
+    getCartFromStorage();
+    return;
+  } else {
     axios
-    .post(route("cart.save"), {
-      body: {
-        userId: props.user.id
-      },
-    })
-    .then((response) => {
-      if (response.status === 200) {
-        cart.value = [];
+      .get(route("cart.show"), {
+        params: {
+          userId: props.user.id,
+        },
+      })
+      .then((response) => {
+        if (response.status === 200) {
+          response.data.forEach((item) => {
+            item.quantity = item.pivot.quantity;
+            delete item.pivot;
 
-        response.data.forEach((item) => {
-          item.quantity = item.pivot.quantity;
-          delete item.pivot;
+            cart.value.push(item);
+          });
 
-          cart.value.push(item);
-        });
+          if (cart.value.length === 0) getCartFromStorage();
 
-        return;
-      }
-
-      alert("Whoops, something went wrong when retrieving your cart!");
-    });
+          return;
+        } else {
+          alert("Whoops, something went wrong when retrieving your cart!");
+        }
+      });
   }
+};
 
+const getCartFromStorage = () => {
   const storedCart = JSON.parse(localStorage.getItem(localCartStorageKey));
+
   if (storedCart.length > 0) {
     storedCart.forEach((item) => cart.value.push(item));
   }

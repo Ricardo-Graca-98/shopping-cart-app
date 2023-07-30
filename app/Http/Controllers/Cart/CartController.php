@@ -16,18 +16,27 @@ use Symfony\Component\HttpFoundation\Response;
 
 class CartController extends Controller
 {
-    public function index() {
+    public function index()
+    {
         return Inertia::render('ShoppingCart', [
             'availableProducts' => Product::all(),
             'user' => auth()->user()
         ]);
     }
 
-    public function show(ShowCartRequest $request)
+    public function show(Request $request)
     {
-        $user = User::findOrFail(Arr::get($request->body, 'userId'));
+        if (!$request->userId) {
+            return response()->json('No user ID provided.', Response::HTTP_BAD_REQUEST);
+        }
 
-        $products = $user->cart->products;
+        $user = User::findOrFail($request->userId);
+
+        if (!$user->cart) {
+            $products = [];
+        } else {
+            $products = $user->cart->products;
+        }
 
         return response()->json($products, Response::HTTP_OK);
     }
@@ -37,26 +46,25 @@ class CartController extends Controller
         $cart = Arr::get($request->body, 'cart');
         $user = User::findOrFail(Arr::get($request->body, 'userId'));
 
-        DB::transaction(function () use ($user, $cart): void {
-            if (!$user->cart) {
-                Cart::create(['user_id' => $user->id]);
-            } else {
-                collect($user->cart->products)->each(function ($product) use ($user) {
-                    $user->cart->products()->detach($product->id);
-                });
-            }
-    
-            collect(json_decode($cart))->each(function ($cartItem) use ($user) {
-                $product = Product::find($cartItem->id);
-    
-                if (!$product) {
-                    return;
-                }
-    
-                $user->cart->products()->attach([$product->id => ['quantity' => $cartItem->quantity]]);
+        if (is_null($user->cart)) {
+            $userCart = Cart::create(['user_id' => $user->id]);
+        } else {
+            $userCart = $user->cart;
+            collect($userCart->products)->each(function ($product) use ($userCart) {
+                $userCart->products()->detach($product->id);
             });
+        }
+
+        collect(json_decode($cart))->each(function ($cartItem) use ($userCart) {
+            $product = Product::find($cartItem->id);
+
+            if (!$product) {
+                return;
+            }
+
+            $userCart->products()->attach([$product->id => ['quantity' => $cartItem->quantity]]);
         });
-        
+
         return response()->json("OK", Response::HTTP_OK);
     }
 }
