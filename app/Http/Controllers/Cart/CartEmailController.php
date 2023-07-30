@@ -21,7 +21,7 @@ class CartEmailController extends Controller
         try {
             Mail::to($email)->send(new SendCart($cart));
         } catch (\Exception $e) {
-            Log::error("Something went wrong when sending email. Error: " . $e->getMessage());
+            Log::error("Something went wrong when sending email.", $e->getMessage());
 
             response()->json($e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
         }

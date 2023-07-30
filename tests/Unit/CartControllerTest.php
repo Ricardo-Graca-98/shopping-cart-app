@@ -7,12 +7,26 @@ use App\Models\Cart;
 use App\Models\User;
 use Inertia\Inertia;
 use App\Models\Product;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Foundation\Testing\WithFaker;
 use Symfony\Component\HttpFoundation\Response;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
+/**
+ * CartControllerTest
+ * 
+ * @group cart
+ */
 class CartControllerTest extends TestCase
 {
+    use RefreshDatabase;
+
+    public function setUp(): void
+    {
+        parent::setUp();
+        Artisan::call('migrate'); // Run migrations before each test
+    }
+
     // Test for CartController@show with valid user ID
     public function testShowCartWithValidUserId()
     {
