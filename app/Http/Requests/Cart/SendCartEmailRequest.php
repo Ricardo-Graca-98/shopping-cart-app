@@ -14,9 +14,9 @@ class SendCartEmailRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'body' => ['array'],
-            'body.email' => ['email', 'max:255'],
-            'body.cart' => ['string']
+            'body' => 'array',
+            'body.email' => 'email|max:255',
+            'body.cart' => 'string|required'
         ];
     }
 }
