@@ -6,11 +6,14 @@
   >
     <div class="sm:fixed sm:top-0 sm:right-0 p-6 text-right">
       <Link
-        v-if="$page.props.auth.user"
-        :href="route('dashboard')"
         class="font-semibold text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white focus:outline focus:outline-2 focus:rounded-sm focus:outline-red-500"
-        >Dashboard</Link
+        v-if="$page.props.auth.user"
+        :href="route('logout')"
+        method="post"
+        as="button"
       >
+        Log Out
+      </Link>
 
       <template v-else>
         <Link
@@ -92,9 +95,9 @@
             </template>
           </draggable>
         </div>
-        <div class="max-h-min max-w-max">
+        <div class="max-h-min max-w-max flex flex-col">
           <button
-            class="max-h-min max-w-max bg-white p-4 rounded-lg shadow-md"
+            class="max-h-min max-w-max bg-white p-4 rounded-lg shadow-md mb-3"
             @click="sendListViaEmail"
           >
             <svg
@@ -109,6 +112,26 @@
                 stroke-linecap="round"
                 stroke-linejoin="round"
                 d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"
+              />
+            </svg>
+          </button>
+          <button
+            class="max-h-min max-w-max bg-white p-4 rounded-lg shadow-md"
+            @click="saveList"
+            v-if="$page.props.auth.user"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              class="w-6 h-6"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z"
               />
             </svg>
           </button>
@@ -144,9 +167,9 @@ const props = defineProps({
     type: Object,
     required: true,
   },
-  emailRoute: {
-    type: String,
-    required: true
+  user: {
+    type: Object,
+    required: false
   }
 });
 
@@ -159,7 +182,51 @@ onMounted(() => {
   getStoredCart();
 });
 
+const saveList = () => {
+  axios
+    .post(route("cart.store"), {
+      body: {
+        cart: JSON.stringify(cart.value),
+        userId: props.user.id
+      },
+    })
+    .then((response) => {
+      if (response.status === 200) {
+        alert("Cart saved! :)");
+
+        return;
+      }
+
+      alert("Whoops, something went wrong!");
+    });
+};
+
 const getStoredCart = () => {
+  if (props.user) {
+    axios
+    .post(route("cart.save"), {
+      body: {
+        userId: props.user.id
+      },
+    })
+    .then((response) => {
+      if (response.status === 200) {
+        cart.value = [];
+
+        response.data.forEach((item) => {
+          item.quantity = item.pivot.quantity;
+          delete item.pivot;
+
+          cart.value.push(item);
+        });
+
+        return;
+      }
+
+      alert("Whoops, something went wrong when retrieving your cart!");
+    });
+  }
+
   const storedCart = JSON.parse(localStorage.getItem(localCartStorageKey));
   if (storedCart.length > 0) {
     storedCart.forEach((item) => cart.value.push(item));
@@ -220,11 +287,11 @@ const sendListViaEmail = () => {
   }
 
   axios
-    .post(props.emailRoute, {
+    .post(route("cart.email.send"), {
       body: {
-        'email': email,
-        'cart': JSON.stringify(cart.value)
-      }
+        email: email,
+        cart: JSON.stringify(cart.value),
+      },
     })
     .then((response) => {
       if (response.status === 200) {
@@ -234,7 +301,7 @@ const sendListViaEmail = () => {
       }
 
       alert("Whoops, something went wrong!");
-    })
+    });
 };
 
 const validateEmail = (email) => {
